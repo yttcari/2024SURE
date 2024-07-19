@@ -2,3 +2,6 @@ dump
 *.h5
 *.png
 *.out
+
+/proj/postprocessing/scripts/2017*
+/proj/postprocessing/scripts/common
