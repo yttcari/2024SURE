@@ -27,7 +27,7 @@ def show(vs, s=None, f=None, ax=None, labels=True, **kwargs):
     if vs.ndim != 2:
         if s is None:
             raise ValueError('must specify snapshot number for movie')
-        v = vs[s,:,:]
+        v = vs[:,:,s]
     else:
         v = vs
 
@@ -36,8 +36,7 @@ def show(vs, s=None, f=None, ax=None, labels=True, **kwargs):
 
     if ax is None:
         fig, ax = plt.subplots(1, 1)
-
-    ax.imshow(f(v.T), origin='lower', extent=vs.extent, **kwargs)
+    ax.imshow(f(v.value.T), origin='lower', extent=vs.extent, **kwargs)
 
     if labels:
         labels = vs.extent_labels
@@ -171,7 +170,7 @@ def grid(pf, plot,
                 axes[j][i].set_yticklabels([])
 
             if i == len(cols)-1 and ytitle is not None:
-                ax_r = axes[j][i].twinx()
+                ax_r = axes[j][i]#.twinx()
                 if rowmap is not None:
                     ax_r.set_ylabel(ytitle.format(rowmap[r]))
                 else:
@@ -207,7 +206,7 @@ def grid(pf, plot,
     fig.tight_layout()
     fig.subplots_adjust(wspace=xspace, hspace=yspace)
     if fout:
-        fig.savefig(fout+'.pdf')
+        #fig.savefig(fout+'.pdf')
         fig.savefig(fout+'.png', dpi=300)
 
     return fig

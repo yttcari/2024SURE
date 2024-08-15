@@ -2,6 +2,9 @@ dump
 *.h5
 *.png
 *.out
+*.tsv
+*.csv
+*.mp4
+*.avi
 
-/proj/postprocessing/scripts/2017*
-/proj/postprocessing/scripts/common
+ext/py-venv

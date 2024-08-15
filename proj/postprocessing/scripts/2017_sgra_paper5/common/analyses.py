@@ -18,7 +18,7 @@
 
 import numpy as np
 from .convolveSquareImage import *
-
+from .shadow import *
 def moments(img, width, height, FWHM=False):
     """Compute image moments"""
 
@@ -91,10 +91,18 @@ def resolvedFractionalPolarizations(img, blurring_fwhm_muas=20.0):
     resolvedLinear = np.sqrt(blurredStokesImages[1]**2 + blurredStokesImages[2]**2)
     return np.nanmean(resolvedLinear/blurredStokesImages[0]), np.nanmean(blurredStokesImages[3]/blurredStokesImages[0])
 
-def computeBetaCoefficient(img, m=2, r_min=0, r_max=np.inf, norm_in_int=False, norm_with_StokesI=True):
+def computeBetaCoefficient(img, m=2, r_min=0, r_max=np.inf, norm_in_int=False, norm_with_StokesI=True, spin=None, inc=None):
     """
     Compute the amplitude and phase of the complex beta coefficient of linear polarization described in Palumbo, Wong, and Prather 2020.  Code based on pmodes.py by Daniel Palumbo.
     """
+
+    cx, cy = 0, 0
+
+    if (spin != None) and (inc != None):
+        x, y = shadow(spin, inc*np.pi/180)
+        x, y = np.ma.maskedarray(x, np.isnan(y)), np.ma.masked_array(y, np.isnan(y))
+        cx, cy = np.average(x), np.average(y)  
+        r_max = np.max(x-cx) 
 
     if img.shape[2] < 3:
         #Return nan if there is no polarization data, which we check by just looking at the number of 2d arrays
@@ -118,7 +126,7 @@ def computeBetaCoefficient(img, m=2, r_min=0, r_max=np.inf, norm_in_int=False, n
     mui = pxi*fov_muas
     muj = pxj*fov_muas
     MUI,MUJ = np.meshgrid(mui,muj)
-    MUDISTS = np.sqrt(np.power(MUI,2.)+np.power(MUJ,2.))
+    MUDISTS = np.sqrt(np.power(MUI-cx,2.)+np.power(MUJ-cy,2.))
 
     # get angles measured East of North
     PXI,PXJ = np.meshgrid(pxi,pxj)
@@ -159,7 +167,7 @@ def computeBetaCoefficient(img, m=2, r_min=0, r_max=np.inf, norm_in_int=False, n
         else:
             coeff /= pf
 
-    return np.abs(coeff), np.angle(coeff) * 180.0 / np.pi
+    return np.abs(coeff), np.angle(coeff) * 180 / np.pi
 
 def computeOpticalDepth(img):
     """Intensity-weighted average optical depth"""

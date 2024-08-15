@@ -32,6 +32,8 @@ from common import hallmark as hm
 from common import analyses as mm
 import pdb
 
+ringrad = {"NGC4594": 7, "NGC3998": 6.2, "NGC4261": 5.6}
+
 def cache_summ(src_fmt, dst_fmt, img_fmt='ipole',
                params=None, order=['snapshot'], **kwargs):
 
@@ -100,7 +102,7 @@ def cache_summ(src_fmt, dst_fmt, img_fmt='ipole',
             moments = mm.moments(img.value, *img.fov.value, FWHM=True)
             unresolvedPolarizationFractions = mm.unresolvedFractionalPolarizations(img)
             resolvedPolarizationFractions = mm.resolvedFractionalPolarizations(img)
-            beta2Coefficient = mm.computeBetaCoefficient(img)
+            beta2Coefficient = mm.computeBetaCoefficient(img, r_max=ringrad[pf.iloc[0].NGC])
             opticalDepth = mm.computeOpticalDepth(img)
             faradayDepth = mm.computeFaradayDepth(img)
             time    = img.meta.time.value

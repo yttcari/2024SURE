@@ -169,7 +169,7 @@ def mockserve(imgs, N=None):
     return dalt.Visibility(*upfft(imgs*pa, *imgs.fov.to(units.rad).value, N=N),
                            freq=m.freq, time=m.time)
 
-def compress(imgs, N=None, cutoff=15e9):
+def compress(imgs, N=None, cutoff=60e9):
     fov = imgs.fov.to(units.rad).value
     spec, U, V = upfft(imgs, *fov, N=N)
 

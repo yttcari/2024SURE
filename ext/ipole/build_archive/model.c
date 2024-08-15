@@ -598,6 +598,7 @@ void init_physical_quantities(int n, double rescale_factor)
           Thetae_unit = lcl_Thetae_u;
           data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
         } else if (ELECTRONS == ELECTRON_SPO2023){
+          fprintf(stderr, "%g %g", qshear, nR);
           double zeta = 0.2;
           double betasq = beta_m * beta_m/beta_crit/beta_crit;
           double k_eff = 0.42 * sqrt(qshear * (4. - qshear)) / 2.;
