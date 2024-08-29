@@ -7,5 +7,5 @@
 
 module load python
 source ../../../../ext/py-venv/bin/activate
-#python cache_summ.py config/SPO2023_summ.yaml
-python output_movgrid2.py
+python cache_gt.py config/SPO2023_gt.yaml
+#python output_movgrid2.py

@@ -1,11 +1,11 @@
 src_fmt:
-  /xdisk/rtilanus/home/yitungtsang/{NGC}_{aspin}_{freq}_{inc:d}/{snapshot:d}.h5
+  /xdisk/rtilanus/home/yitungtsang/SgrA_{aspin}_{freq}_{inc:d}/{snapshot:d}.h5
 dst_fmt:
-  cache/SPO2023/gt_60e9/{NGC}_a{aspin}_i{inc:d}_{freq}.h5
+  cache/SPO2023/gt_SgrA/SgrA_a{aspin}_i{inc:d}_{freq}.h5
 img_fmt:
   ipole
 params:
-  - NGC
+#  - NGC
   - aspin
   - freq
   - inc

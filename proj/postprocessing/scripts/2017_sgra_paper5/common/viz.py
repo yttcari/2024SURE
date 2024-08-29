@@ -171,6 +171,7 @@ def grid(pf, plot,
 
             if i == len(cols)-1 and ytitle is not None:
                 ax_r = axes[j][i]#.twinx()
+                ax_r.yaxis.set_label_position('right')
                 if rowmap is not None:
                     ax_r.set_ylabel(ytitle.format(rowmap[r]))
                 else:

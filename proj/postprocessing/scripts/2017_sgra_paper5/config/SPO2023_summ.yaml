@@ -1,7 +1,7 @@
 src_fmt:
-  /xdisk/rtilanus/home/yitungtsang/{NGC}_{aspin}_{freq}_{inc}/{snapshot}.h5
+  /xdisk/rtilanus/home/yitungtsang/SgrA_{aspin}_{freq}_{inc}/{snapshot}.h5
 dst_fmt:
-  cache/SPO2023/summ1/{NGC}_a{aspin}_i{inc}_{freq}.tsv
+  cache/SPO2023/summ_SgrA/SgrA_a{aspin}_i{inc}_{freq}.tsv
 img_fmt:
   ipole
 order:
