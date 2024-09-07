@@ -1,8 +1,0 @@
-src_fmt:
-  cache/SPO2023/summ/{NGC}_a{aspin}_i{inc}_230.e9.tsv
-dst_fmt:
-  cache/SPO2023/summ/{NGC}_230.e9_type.tsv
-img_fmt:
-  ipole
-order:
-  - snapshot

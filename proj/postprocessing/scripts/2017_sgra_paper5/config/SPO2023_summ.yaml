@@ -1,8 +1,0 @@
-src_fmt:
-  /xdisk/rtilanus/home/yitungtsang/SgrA_{aspin}_86.e9_{inc}/{snapshot}.h5
-dst_fmt:
-  cache/SPO2023/summ_SgrA/SgrA_a{aspin}_i{inc}_f86.e9.tsv
-img_fmt:
-  ipole
-order:
-  - snapshot
