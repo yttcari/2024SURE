@@ -1,3 +1,6 @@
+'''
+find average flux of all the snapshots in the directory for debug use
+'''
 import numpy as np
 import h5py
 import os

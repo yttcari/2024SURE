@@ -1,8 +1,13 @@
-bin: exe file (e.g. ipole.exe)
-ext: external codes (e.g. ipole, pyharm. For these two codes please refer to AFD-illinois)
-par: global documents that are requird in this project (e.g. par file, M_unit)
-proj: code created/modified from ext for SURE project only. each sub-folder is each task-subproject in this project
-- doc: document or parameter file that is required/produced locally in sub-projects/tasks
-- scripts: scripts that are modified/required/created for the sub-projects/tasks, with suffix indicating the device it should be run on
+This project is done in 2024 Summer Undergraduate Research Exchange (SURE) programme. 
+The aim of this project is to apply SPO2023 electron model in to ray tracing code `ipole`. 
+It is then used to test for the Sgr A* constraints and predict the images of ngEHT radio-quiet active galactic nuclei targets.
 
-last update: 2024 Jul 15
+# Reference
+This project uses modified libraries, including:
+- [ipole](https://github.com/AFD-Illinois/ipole/tree/master)
+- [pyharm](https://github.com/AFD-Illinois/pyharm/tree/master)
+- [2017_sgra_paper5](https://github.com/eventhorizontelescope/2017_sgra_paper5/tree/main)
+- [fadge](https://github.com/adxsrc/fadge/tree/main)
+- [EHTGRMHDCal](https://github.com/ptiede/EHTGRMHDCal/tree/main)
+- [VIDA](https://github.com/ptiede/VIDA.jl/tree/master)
+

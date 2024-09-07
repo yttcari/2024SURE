@@ -1,10 +1,11 @@
-dump
-*.h5
-*.png
-*.out
-*.tsv
-*.csv
-*.mp4
-*.avi
+*
 
+!*/
 ext/py-venv
+
+!.py
+!.ipynb
+!.jl
+!.md
+!.c
+!.h

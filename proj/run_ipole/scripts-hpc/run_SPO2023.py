@@ -12,7 +12,7 @@ dsource = [9.9, 14, 31, 0.008]
 mm_Flux = [0.2, 0.13, 0.2, 2.4]
 
 spin = ["+0.94", "+0.5", "0", "-0.5", "-0.94"]
-freqcgs = ["86.e9", "230.e9", "345.e9"]
+freqcgs = ["86.e9", "230.e9", "345.e9", str(round(3e8/2.2e6, 5))]
 inclination = ["30", "50", "160"]
 
 nR = ["1.9998", "1.9334", "1.8425", "1.8594", "1.8587"]
@@ -23,6 +23,8 @@ dump_dir = "/xdisk/rtilanus/proj/eht/GRMHD_kharma-v3/Sa"
 ipole_exe_dir = '../../../bin/ipole'
 
 ### Parameter to be changed: ###
+################################
+
 w = 5
 n = NGC.index('SgrA')
 v = freqcgs.index('86.e9')
@@ -32,13 +34,18 @@ SKIP = True
 
 #csv_path = 'doc/SPO_SANE_M_unit.csv' #NGC3998_+0.94_86.e9_50
 csv_path = 'doc/SgrA_Munit.csv'
+FOV = str(800)
+resolution = str(200)
+
+START = 0
+END = 500
+
+##############################
 ### Parameter session ends ###
 
 def plot_avg_ipole(a, i, v, M_unit, n):
-    FOV = str(50)
-    resolution = str(200)
     
-    imgdump_dir = "/xdisk/rtilanus/home/yitungtsang/" + "_".join([NGC[n], spin[a], freqcgs[v], inclination[i]]) 
+    imgdump_dir = "/xdisk/rtilanus/home/yitungtsang/" + "_".join([NGC[n], spin[a], freqcgs[v], inclination[i], FOV]) 
  
     # Make direectory if neccessary,
     # Pass if the directory is exist 
@@ -47,7 +54,7 @@ def plot_avg_ipole(a, i, v, M_unit, n):
     except:
         pass
 
-    for fno in range(1000):
+    for fno in range(START, END):
         # Skip if the file is existed
         if SKIP and os.path.isfile(imgdump_dir + f"/{w}{fno:03}.h5"):
             print(f"{imgdump_dir}/{w}{fno:03}.h5 already existed; SKIP.")
@@ -59,7 +66,8 @@ def plot_avg_ipole(a, i, v, M_unit, n):
                '--freqcgs', freqcgs[v], '--thetacam', str(inclination[i]),
                '--dump', dump_dir + spin[a] + f"_w{w}/torus.out0.0{w}{fno:03}.h5",
                '--outfile', imgdump_dir + f"/{w}{fno:03}.h5", 
-               '--qshear', qshear[a], '--nR', nR[a]]
+               '--qshear', qshear[a], '--nR', nR[a],
+               '--fovx_dsource', FOV, '--fovy_dsource', FOV]
                # Since SgrA so commented this '--fovx_dsource', FOV, '--fovy_dsource', FOV,'--nx', resolution, '--ny', resolution]
         print(par)
         subprocess.run(par)
