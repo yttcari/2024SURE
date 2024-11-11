@@ -84,7 +84,7 @@ double tf;
 #define ELECTRON_SPO2023 (4) // use mixed TP_OVER_TE (Satapathy et al., 2023/2024)
 #define ELECTRON_KORAL (9) // load Te (in Kelvin) from dump file (KORAL etc.)
 
-static int RADIATION, ELECTRONS = ELECTRON_SPO2023;
+static int RADIATION, ELECTRONS = ELECTRON_BETA;
 static double gam = 1.444444, game = 1.333333, gamp = 1.666667;
 static double Thetae_unit, Mdotedd;
 
@@ -598,20 +598,23 @@ void init_physical_quantities(int n, double rescale_factor)
           Thetae_unit = lcl_Thetae_u;
           data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
         } else if (ELECTRONS == ELECTRON_SPO2023){
-          fprintf(stderr, "%g %g", qshear, nR);
           double zeta = 0.2;
           double betasq = beta_m * beta_m/beta_crit/beta_crit;
-          double k_eff = 0.42 * sqrt(qshear * (4. - qshear)) / 2.;
-          double gam_km = sqrt(sqrt((2. - qshear) * (2. - qshear) + k_eff * k_eff) - (k_eff * k_eff + (qshear - 2.)));
-          double Ps_over_Pa = 0.5 * (qshear * (2. + 2. * (2. - qshear) / (k_eff * k_eff + gam_km * gam_km)) - 2.);
-          double f = Ps_over_Pa + 35./(1 + pow(beta_m/15., -1.4));
-          double game = 4./3. + 0.13 * betasq / (1 + betasq);
-          double gamp_eff = 1. + 1. / ((1 + 2. * zeta / beta_m) / (gamp - 1.));
-          double trat = (gamp_eff - 1.) * (1. - (game - 1.) * (2. - nR)) * f / (game - 1.) / (1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m));
+          
+          double k_eff = 0.42 * sqrt(qshear * (4 - qshear)) / 2;
+          double gam_km = sqrt(sqrt(pow(2 - qshear, 2) + pow(k_eff, 2)) - (pow(k_eff, 2) + (qshear - 2)));
+          double Ps_over_Pa = 0.5 * (qshear * (2. + 2. * (2 - qshear) / (pow(k_eff, 2) + pow(gam_km, 2))) - 2);
+          double f = Ps_over_Pa + 35. / (1. + pow(beta_m / 15., -1.4));
+            
+          double game = 4./3. + 0.13 * pow(betasq, 2) / (1 + pow(betasq, 2));
+          //double gamp_eff = 1. + 1. / ((1 + 2. * zeta / beta_m) / (gamp - 1.));
+          //double trat = (gamp_eff - 1.) * (1. - (game - 1.) * (2. - nR)) * f / (game - 1.) / (1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m));
+          
+          double r_gridcentre = startx[1] + (i + 0.5) * dx[1];
+          double Theta_e = ((game - 1.) / (1. - (game - 1.) * (2. - nR))) * (1. / (1. + f)) * (1.5 / r_gridcentre);
 
-          double lcl_Thetae_u = (MP/ME) * (game-1.) * (gamp-1.) / ( (gamp-1.) + (game-1.)*trat );
-          Thetae_unit = lcl_Thetae_u;
-          data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
+          data[n]->thetae[i][j][k] = Theta_e;
+          //data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
         } else if (ELECTRONS == ELECTRON_KORAL) {
           // convert Kelvin -> Thetae
           data[n]->thetae[i][j][k] = data[n]->p[TFLK][i][j][k] * KBOL / ME / CL / CL;
