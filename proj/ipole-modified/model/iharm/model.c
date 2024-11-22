@@ -27,6 +27,9 @@
 #define FORMAT_HAMR_EKS (3)
 #define FORMAT_IHARM_v1 (1)
 #define FORMAT_KORAL_v2 (4)
+
+// for own use in this code only
+#define SELFDEBUG 1
 int dumpfile_format = 0;
 
 // UNITS
@@ -576,6 +579,27 @@ void init_physical_quantities(int n, double rescale_factor)
 
         double sigma_m = bsq/data[n]->p[KRHO][i][j][k];
         double beta_m = data[n]->p[UU][i][j][k]*(gam-1.)/0.5/bsq;
+
+        double X[NDIM];
+        ijktoX(i, j, k, X);
+        double r, th;
+        bl_coord(X, &r, &th);
+
+        // Enforce a max on Thetae based on cooling time == dynamical time
+        if (cooling_dynamical_times > 1e-20) {
+          
+          // Calculate thetae_max based on matching the cooling time w/dynamical time
+          // Makes sure to use b w/units, but r has already been rescaled
+          double Thetae_max_dynamical =  1 / cooling_dynamical_times * 7.71232e46 / 2 / MBH * pow(data[n]->b[i][j][k], -2) * pow(r * sin(th), -1.5);
+#if DEBUG
+          if (Thetae_max_dynamical < data[n]->thetae[i][j][k]) {
+            if (r > 2) fprintf(stderr, "Ceiling on temp! %g < %g, r, th %g %g\n", Thetae_max_dynamical, data[n]->thetae[i][j][k], r, th);
+            ceilings++;
+          }
+#endif
+          data[n]->thetae[i][j][k] = fmin(data[n]->thetae[i][j][k], Thetae_max_dynamical);
+        }
+
 #if DEBUG
         if(isnan(sigma_m)) {
           sigma_m = 0;
@@ -600,18 +624,16 @@ void init_physical_quantities(int n, double rescale_factor)
         } else if (ELECTRONS == ELECTRON_SPO2023){
           double zeta = 0.2;
           double betasq = beta_m * beta_m/beta_crit/beta_crit;
-          double k_eff = 0.42 * sqrt(qshear * (4. - qshear)) / 2.;
-          double gam_km = sqrt(sqrt((2. - qshear) * (2. - qshear) + k_eff * k_eff) - (k_eff * k_eff + (qshear - 2.)));
-          double Ps_over_Pa = 0.5 * (qshear * (2. + 2. * (2. - qshear) / (k_eff * k_eff + gam_km * gam_km)) - 2.);
-          double f = Ps_over_Pa + 35./(1 + pow(beta_m/15., -1.4));
-          double game = 4./3. + 0.13 * betasq / (1 + betasq);
-          double gamp_eff = 1. + 1. / ((1 + 2. * zeta / beta_m) / (gamp - 1.));
+          double k_eff = sqrt(qshear * (4. - qshear)) * 0.42 / 2.;
+          double gam_km = sqrt(sqrt(pow(2. - qshear, 2.) + pow(k, 2.) - (pow(k_eff, 2.)+ (qshear-2))));
+          double Ps_over_Pa = 0.5 *(qshear * (2. + 2. * (2. - qshear) / (pow(k_eff, 2.) + pow(gam_km, 2.))) - 2.);
+          double f = 35. / (1. + pow(beta_m/15., -1.4)) + Ps_over_Pa;
+          double game = 4./3. + 0.13 * bsq / (1. + bsq);
+          //double gamp_eff = 1. + 1. / ((1 + 2. * zeta / beta_m) / (gamp - 1.));
           //double trat = (gamp_eff - 1.) * (1. - (game - 1.) * (2. - nR)) * f / (game - 1.) / (1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m));
-          
-          double r_gridcentre = startx[1] + (i + 0.5) * dx[1];
-          double Theta_e =(game - 1) * 3 / ((1 - (game - 1) * (2 - nR)) * (1 + f) * 2 * r_gridcentre);
+
+          double Theta_e = (game - 1.) * (1.5 /r) / ((1. - (game-1) * (2.-nR)) * (1. + f));
           data[n]->thetae[i][j][k] = Theta_e;
-          //data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
         } else if (ELECTRONS == ELECTRON_KORAL) {
           // convert Kelvin -> Thetae
           data[n]->thetae[i][j][k] = data[n]->p[TFLK][i][j][k] * KBOL / ME / CL / CL;
@@ -634,23 +656,7 @@ void init_physical_quantities(int n, double rescale_factor)
         }
 #endif
 
-        // Enforce a max on Thetae based on cooling time == dynamical time
-        if (cooling_dynamical_times > 1e-20) {
-          double X[NDIM];
-          ijktoX(i, j, k, X);
-          double r, th;
-          bl_coord(X, &r, &th);
-          // Calculate thetae_max based on matching the cooling time w/dynamical time
-          // Makes sure to use b w/units, but r has already been rescaled
-          double Thetae_max_dynamical =  1 / cooling_dynamical_times * 7.71232e46 / 2 / MBH * pow(data[n]->b[i][j][k], -2) * pow(r * sin(th), -1.5);
-#if DEBUG
-          if (Thetae_max_dynamical < data[n]->thetae[i][j][k]) {
-            if (r > 2) fprintf(stderr, "Ceiling on temp! %g < %g, r, th %g %g\n", Thetae_max_dynamical, data[n]->thetae[i][j][k], r, th);
-            ceilings++;
-          }
-#endif
-          data[n]->thetae[i][j][k] = fmin(data[n]->thetae[i][j][k], Thetae_max_dynamical);
-        }
+        
 
         // Apply floor last in case the above is a very restrictive ceiling
         data[n]->thetae[i][j][k] = fmax(data[n]->thetae[i][j][k], 1.e-3);
