@@ -24,7 +24,7 @@ dump_dir = '/xdisk/chanc/proj/eht/GRMHD_dt5M/Sa+0.94_w5/torus.out0.05000.h5'
 spin = '+0.94'
 
 qshear = '1.9998'
-nR = '1.72265'
+nR = '1.7265'
 
 # Run simulation
 n = obj.index(N)
@@ -35,8 +35,7 @@ if True:
     par = [ipole_dir ,'-par', par_dir, '--M_unit', str(M_unit),
                '--dsource', f"{dsource[n]}e6", '--MBH', str(round(10**log_MBH[n], 4)),
                '--freqcgs', '230.e9', '--thetacam', inc, '--trat_large', "40",
-               '--dump', dump_dir, '--fovy_dsource', '50', '--fovx_dsource', '50',
-               '--outfile', output_dir,
+               '--dump', dump_dir, '--outfile', output_dir,
                '--qshear', qshear, '--nR', nR, 
                '--beta_crit', beta_crit[mode]]
 
