@@ -606,19 +606,22 @@ void init_physical_quantities(int n, double rescale_factor)
           double zeta = 0.2;
           double betasq = beta_m * beta_m/beta_crit/beta_crit;
           
-          double k_eff = 0.42 * sqrt(qshear * (4 - qshear)) / 2;
-          double gam_km = sqrt(sqrt(pow(2. - qshear, 2.) + pow(k_eff, 2.) - (pow(k_eff, 2.)+ (qshear-2))));
-          double Ps_over_Pa = Ps_over_Pa = 0.5 *(qshear * (2. + 2. * (2. - qshear) / (pow(k_eff, 2.) + pow(gam_km, 2.))) - 2.); 
+          double k_eff = 0.42 * sqrt(qshear * (4. - qshear)) / 2.;
+          double gam_km = sqrt(sqrt(pow(2. - qshear, 2.) + 4 * pow(k_eff, 2.)) - (pow(k_eff, 2.)+ (2-qshear)));
+          double Ps_over_Pa = 0.5 *(qshear * (2. + 2. * (2. - qshear) / (pow(k_eff, 2.) + pow(gam_km, 2.))) - 2.); 
           double f = 35. / (1. + pow(beta_m/15., -1.4)) + Ps_over_Pa; 
             
           double game = 4./3. + 0.13 * bsq / (1. + bsq);
           double gamp_eff = 1. + 1. / ((1 + 2. * zeta / beta_m) / (gamp - 1.));
-          double trat = (gamp_eff - 1.) * (1. - (game - 1.) * (2. - nR)) * f / (game - 1.) / (1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m));
+          double trat = (gamp_eff - 1.) * (1. - (game - 1.) * (2. - nR)) * f / ((game - 1.) * (1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m)));
           
-          double Theta_e = (game - 1.) * (1.5 /r) / ((1. - (game-1) * (2.-nR)) * (1. + f));
-
-          data[n]->thetae[i][j][k] = Theta_e;
-          //data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
+          //double Theta_e = (game - 1.) * (1.5 /r) / ((1. - (game-1) * (2.-nR)) * (1. + f));
+          //if(trat < 1){
+          //  double Theta_e = (gamp_eff - 1.) * f * (1.5 / r) / ((1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m) * (1. + f)));
+          //}
+          //data[n]->thetae[i][j][k] = Theta_e;
+          double lcl_Thetae_u = (MP/ME) * (game-1.) * (gamp-1.) / ( (gamp-1.) + (game-1.)*trat );
+          data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
         } else if (ELECTRONS == ELECTRON_KORAL) {
           // convert Kelvin -> Thetae
           data[n]->thetae[i][j][k] = data[n]->p[TFLK][i][j][k] * KBOL / ME / CL / CL;

@@ -27,6 +27,7 @@
 #define FORMAT_HAMR_EKS (3)
 #define FORMAT_IHARM_v1 (1)
 #define FORMAT_KORAL_v2 (4)
+
 int dumpfile_format = 0;
 
 // UNITS
@@ -84,7 +85,7 @@ double tf;
 #define ELECTRON_SPO2023 (4) // use mixed TP_OVER_TE (Satapathy et al., 2023/2024)
 #define ELECTRON_KORAL (9) // load Te (in Kelvin) from dump file (KORAL etc.)
 
-static int RADIATION, ELECTRONS = ELECTRON_BETA;
+static int RADIATION, ELECTRONS = ELECTRON_SPO2023;
 static double gam = 1.444444, game = 1.333333, gamp = 1.666667;
 static double Thetae_unit, Mdotedd;
 
@@ -561,7 +562,6 @@ void init_physical_quantities(int n, double rescale_factor)
 #endif
 
   rescale_factor = sqrt(rescale_factor);
-
   // cover everything, even ghost zones
 #pragma omp parallel for collapse(3)
   for (int i = 0; i < N1+2; i++) {
@@ -585,7 +585,12 @@ void init_physical_quantities(int n, double rescale_factor)
           beta_m = INFINITY;
           fprintf(stderr, "Setting INF beta!\n");
         }
-#endif
+#endif  
+        double X[NDIM];
+        ijktoX(i, j, k, X);
+        double r, th;
+        bl_coord(X, &r, &th);
+
         if (ELECTRONS == ELECTRON_DUMP) {
           data[n]->thetae[i][j][k] = data[n]->p[KEL][i][j][k] * 
                                      pow(data[n]->p[KRHO][i][j][k],game-1.)*Thetae_unit;
@@ -601,20 +606,22 @@ void init_physical_quantities(int n, double rescale_factor)
           double zeta = 0.2;
           double betasq = beta_m * beta_m/beta_crit/beta_crit;
           
-          double k_eff = 0.42 * sqrt(qshear * (4 - qshear)) / 2;
-          double gam_km = sqrt(sqrt(pow(2 - qshear, 2) + pow(k_eff, 2)) - (pow(k_eff, 2) + (qshear - 2)));
-          double Ps_over_Pa = 0.5 * (qshear * (2. + 2. * (2 - qshear) / (pow(k_eff, 2) + pow(gam_km, 2))) - 2);
-          double f = Ps_over_Pa + 35. / (1. + pow(beta_m / 15., -1.4));
+          double k_eff = 0.42 * sqrt(qshear * (4. - qshear)) / 2.;
+          double gam_km = sqrt(sqrt(pow(2. - qshear, 2.) + 4 * pow(k_eff, 2.)) - (pow(k_eff, 2.)+ (2-qshear)));
+          double Ps_over_Pa = 0.5 *(qshear * (2. + 2. * (2. - qshear) / (pow(k_eff, 2.) + pow(gam_km, 2.))) - 2.); 
+          double f = 35. / (1. + pow(beta_m/15., -1.4)) + Ps_over_Pa; 
             
-          double game = 4./3. + 0.13 * pow(betasq, 2) / (1 + pow(betasq, 2));
-          //double gamp_eff = 1. + 1. / ((1 + 2. * zeta / beta_m) / (gamp - 1.));
-          //double trat = (gamp_eff - 1.) * (1. - (game - 1.) * (2. - nR)) * f / (game - 1.) / (1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m));
+          double game = 4./3. + 0.13 * bsq / (1. + bsq);
+          double gamp_eff = 1. + 1. / ((1 + 2. * zeta / beta_m) / (gamp - 1.));
+          double trat = (gamp_eff - 1.) * (1. - (game - 1.) * (2. - nR)) * f / ((game - 1.) * (1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m)));
           
-          double r_gridcentre = startx[1] + (i + 0.5) * dx[1];
-          double Theta_e = ((game - 1.) / (1. - (game - 1.) * (2. - nR))) * (1. / (1. + f)) * (1.5 / r_gridcentre);
-
-          data[n]->thetae[i][j][k] = Theta_e;
-          //data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
+          //double Theta_e = (game - 1.) * (1.5 /r) / ((1. - (game-1) * (2.-nR)) * (1. + f));
+          //if(trat < 1){
+          //  double Theta_e = (gamp_eff - 1.) * f * (1.5 / r) / ((1. - (gamp_eff - 1.) * (2. - nR) * (1. + 2. * zeta / beta_m) * (1. + f)));
+          //}
+          //data[n]->thetae[i][j][k] = Theta_e;
+          double lcl_Thetae_u = (MP/ME) * (game-1.) * (gamp-1.) / ( (gamp-1.) + (game-1.)*trat );
+          data[n]->thetae[i][j][k] = lcl_Thetae_u*data[n]->p[UU][i][j][k]/data[n]->p[KRHO][i][j][k];
         } else if (ELECTRONS == ELECTRON_KORAL) {
           // convert Kelvin -> Thetae
           data[n]->thetae[i][j][k] = data[n]->p[TFLK][i][j][k] * KBOL / ME / CL / CL;
@@ -636,13 +643,8 @@ void init_physical_quantities(int n, double rescale_factor)
           fprintf(stderr, "Setting floor temp!\n");
         }
 #endif
-
         // Enforce a max on Thetae based on cooling time == dynamical time
         if (cooling_dynamical_times > 1e-20) {
-          double X[NDIM];
-          ijktoX(i, j, k, X);
-          double r, th;
-          bl_coord(X, &r, &th);
           // Calculate thetae_max based on matching the cooling time w/dynamical time
           // Makes sure to use b w/units, but r has already been rescaled
           double Thetae_max_dynamical =  1 / cooling_dynamical_times * 7.71232e46 / 2 / MBH * pow(data[n]->b[i][j][k], -2) * pow(r * sin(th), -1.5);
